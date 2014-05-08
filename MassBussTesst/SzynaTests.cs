@@ -122,6 +122,28 @@ namespace MassBussTesst
                 subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
         }
 
+        [Test]
+        public void Ordered_WPrzypadkuPonawianiaKolejnośćKomunikatówJestZachowana()
+        {
+            // arrange
+            var szyna = new Szyna();
+            var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
+            szyna.SubscribeOrdered(subsciber);
+            szyna.Initialize();
+            var message1 = Message.Create();
+            var message2 = Message.Create();
+
+            // act
+            szyna.PublishOrdered(message1);
+            szyna.PublishOrdered(message2);
+
+            // assert
+            subsciber.Wait();
+            CollectionAssert.AreEqual(
+                new[] { message1.Id, message2.Id },
+                subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
+        }
+
         private class Subscriber : IMessageSubscriber<Message>
         {
             private const int DefaultTimeout = 5000;

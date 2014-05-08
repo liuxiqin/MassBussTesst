@@ -12,15 +12,58 @@ namespace MassBussTesst
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
             = new List<Action<SubscriptionBusServiceConfigurator>>();
 
+        private int sequencer;
+
+        public void PublishOrdered<T>(T message) where T : class
+        {
+            // TODO: locking?
+            Publish(new OrderedMessage<T> { Number = ++sequencer, InnerMessage = message });
+        }
+
         public void Publish<T>(T message) where T : class
         {
             System.Diagnostics.Debug.WriteLine("Publish: " + message);
             Bus.Instance.Publish(message);
         }
 
+        public void SubscribeOrdered<T>(IMessageSubscriber<T> subscriber) where T : class
+        {
+            Subscribe(new OrderedSubsciber<T>(subscriber));
+        }
+
         public void Subscribe<T>(IMessageSubscriber<T> subscriber) where T : class
         {
             subscribtions.Add(subs => subs.Handler<T>(subscriber.Handle).Permanent());
+        }
+
+        private class OrderedSubsciber<T> : IMessageSubscriber<OrderedMessage<T>>
+            where T : class
+        {
+            private static readonly object SyncObject = new Object();
+            private int lastMessageNumber;
+            private readonly IMessageSubscriber<T> subscriber;
+
+            public OrderedSubsciber(IMessageSubscriber<T> subscriber)
+            {
+                this.subscriber = subscriber;
+            }
+
+            public void Handle(OrderedMessage<T> message)
+            {
+                lock(SyncObject)
+                {
+                    if (message.Number == lastMessageNumber + 1)
+                    {
+                        subscriber.Handle(message.InnerMessage);
+                        lastMessageNumber++;
+                    }
+                    else
+                    {
+                        // TODO: odpowiednik HandleCurrentMessageLater z NSeviceBus?
+                        throw new Exception("Out of order!");
+                    }
+                }
+            }
         }
 
         public void Initialize()
