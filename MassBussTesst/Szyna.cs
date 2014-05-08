@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Messaging;
 using MassTransit;
 using MassTransit.Advanced;
@@ -8,7 +9,8 @@ namespace MassBussTesst
 {
     class Szyna
     {
-        private Action<SubscriptionBusServiceConfigurator> subscribeAction;
+        private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
+            = new List<Action<SubscriptionBusServiceConfigurator>>();
 
         public void Publish<T>(T message) where T : class
         {
@@ -17,7 +19,7 @@ namespace MassBussTesst
 
         public void Subscribe<T>(IMessageSubscriber<T> subscriber) where T : class
         {
-            subscribeAction = subs => subs.Handler<T>(subscriber.Handle).Permanent();
+            subscribtions.Add(subs => subs.Handler<T>(subscriber.Handle).Permanent());
         }
 
         public void Initialize()
@@ -36,7 +38,7 @@ namespace MassBussTesst
                     sbc.ReceiveFrom(address);
                     sbc.SetCreateMissingQueues(true);
                     sbc.SetCreateTransactionalQueues(true);
-                    sbc.Subscribe(subs => subscribeAction(subs));
+                    sbc.Subscribe(subs => subscribtions.ForEach(action => action(subs)));
                 });
         }
 
