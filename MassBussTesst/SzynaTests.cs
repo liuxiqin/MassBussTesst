@@ -100,12 +100,35 @@ namespace MassBussTesst
             subsciber.Wait();
         }
 
+        [Test]
+        public void WPrzypadkuPonawianiaKolejnośćKomunikatówNieJestZachowana()
+        {
+            // arrange
+            var szyna = new Szyna();
+            var subsciber = new Subscriber(expectedNoEvents: 3, firstTimeException: true);
+            szyna.Subscribe(subsciber);
+            szyna.Initialize();
+            var message1 = Message.Create();
+            var message2 = Message.Create();
+
+            // act
+            szyna.Publish(message1);
+            szyna.Publish(message2);
+
+            // assert
+            subsciber.Wait();
+            CollectionAssert.AreEqual(
+                new[] { message2.Id, message1.Id },
+                subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
+        }
+
         private class Subscriber : IMessageSubscriber<Message>
         {
             private const int DefaultTimeout = 5000;
 
             public readonly List<Message> ReceivedMessages = new List<Message>();
             private readonly AutoResetEvent waitHandle = new AutoResetEvent(false);
+            private int noEvents = 0;
             private readonly int expectedNoEvents;
             private bool firstTimeException;
 
@@ -117,8 +140,7 @@ namespace MassBussTesst
 
             void IMessageSubscriber<Message>.Handle(Message message)
             {
-                ReceivedMessages.Add(message);
-                if (ReceivedMessages.Count == expectedNoEvents)
+                if (++noEvents == expectedNoEvents)
                     waitHandle.Set();
 
                 if (firstTimeException)
@@ -126,6 +148,8 @@ namespace MassBussTesst
                     firstTimeException = false;
                     throw new Exception();
                 }
+
+                ReceivedMessages.Add(message);
             }
 
             public void Wait()
