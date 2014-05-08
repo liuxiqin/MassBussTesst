@@ -140,6 +140,7 @@ namespace MassBussTesst
 
             void IMessageSubscriber<Message>.Handle(Message message)
             {
+                System.Diagnostics.Debug.WriteLine("Handle: " + message);
                 if (++noEvents == expectedNoEvents)
                     waitHandle.Set();
 
@@ -166,6 +167,11 @@ namespace MassBussTesst
             public static Message Create()
             {
                 return new Message { Id = Guid.NewGuid().ToString() };
+            }
+
+            public override string ToString()
+            {
+                return Id;
             }
         }
     }

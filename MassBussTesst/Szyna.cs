@@ -14,6 +14,7 @@ namespace MassBussTesst
 
         public void Publish<T>(T message) where T : class
         {
+            System.Diagnostics.Debug.WriteLine("Publish: " + message);
             Bus.Instance.Publish(message);
         }
 
