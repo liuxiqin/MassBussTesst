@@ -66,7 +66,7 @@ namespace MassBussTesst
             }
         }
 
-        public void Initialize()
+        public void Initialize(bool concurrent = true)
         {
             var address = new Uri("msmq://localhost/created_transactional");
             const string localName = @".\private$\created_transactional";
@@ -78,7 +78,8 @@ namespace MassBussTesst
                 sbc =>
                 {
                     sbc.UseMsmq(o => o.UseMulticastSubscriptionClient());
-                    sbc.SetConcurrentReceiverLimit(1);
+                    if (!concurrent)
+                        sbc.SetConcurrentReceiverLimit(1);
                     sbc.ReceiveFrom(address);
                     sbc.SetCreateMissingQueues(true);
                     sbc.SetCreateTransactionalQueues(true);

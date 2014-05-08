@@ -34,13 +34,13 @@ namespace MassBussTesst
         }
 
         [Test]
-        public void WysłaneKomunikatyDocierająDoCeluWKolejnościWysyłania()
+        public void WysłaneKomunikatyDocierająDoCeluWKolejnościWysyłaniaGdyUżytyJest1Wątek()
         {
             // arrange
             var szyna = new Szyna();
             var subsciber = new Subscriber(expectedNoEvents: 3);
             szyna.Subscribe(subsciber);
-            szyna.Initialize();
+            szyna.Initialize(concurrent: false);
             var message1 = Message.Create();
             var message2 = Message.Create();
             var message3 = Message.Create();
@@ -83,7 +83,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
+            var subsciber = new Subscriber(expectedNoEvents: 1, firstTimeException: true);
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             var message = Message.Create();
@@ -105,9 +105,9 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 3, firstTimeException: true);
+            var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
             szyna.Subscribe(subsciber);
-            szyna.Initialize();
+            szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
             var message2 = Message.Create();
 
@@ -129,7 +129,7 @@ namespace MassBussTesst
             var szyna = new Szyna();
             var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
             szyna.SubscribeOrdered(subsciber);
-            szyna.Initialize();
+            szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
             var message2 = Message.Create();
 
@@ -150,7 +150,6 @@ namespace MassBussTesst
 
             public readonly List<Message> ReceivedMessages = new List<Message>();
             private readonly AutoResetEvent waitHandle = new AutoResetEvent(false);
-            private int noEvents = 0;
             private readonly int expectedNoEvents;
             private bool firstTimeException;
 
@@ -163,16 +162,21 @@ namespace MassBussTesst
             void IMessageSubscriber<Message>.Handle(Message message)
             {
                 System.Diagnostics.Debug.WriteLine("Handle: " + message);
-                if (++noEvents == expectedNoEvents)
-                    waitHandle.Set();
 
-                if (firstTimeException)
+                lock (ReceivedMessages)
                 {
-                    firstTimeException = false;
-                    throw new Exception();
-                }
+                    if (firstTimeException)
+                    {
+                        firstTimeException = false;
+                        throw new Exception();
+                    }
 
-                ReceivedMessages.Add(message);
+                    Thread.Sleep(50);
+
+                    ReceivedMessages.Add(message);
+                    if (ReceivedMessages.Count == expectedNoEvents)
+                        waitHandle.Set();
+                }
             }
 
             public void Wait()
