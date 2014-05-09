@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Messaging;
+using System.Threading;
 using MassTransit;
 using MassTransit.SubscriptionConfigurators;
 
@@ -11,12 +12,18 @@ namespace MassBussTesst
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
             = new List<Action<SubscriptionBusServiceConfigurator>>();
 
+        // TODO: powinien być 1 per strumień komunikatów
         private int sequencer;
 
         public void PublishOrdered<T>(T message) where T : class
         {
             // TODO: locking?
-            Publish(new OrderedMessage<T> { Number = ++sequencer, InnerMessage = message });
+            Publish(
+                new OrderedMessage<T>
+                {
+                    Number = Interlocked.Increment(ref sequencer),
+                    InnerMessage = message
+                });
         }
 
         public void Publish<T>(T message) where T : class
