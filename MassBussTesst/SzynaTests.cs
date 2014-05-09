@@ -8,8 +8,18 @@ namespace MassBussTesst
     [TestFixture]
     public class SzynaTests
     {
+        private Szyna szyna;
+        private TestingSubscriber subscriber;
+
+        [SetUp]
+        public void SetUpEachTest()
+        {
+            szyna = new Szyna();
+            subscriber = new TestingSubscriber();
+        }
+
         [TearDown]
-        public void TearDown()
+        public void TearDownEachTest()
         {
             Szyna.Shutdown();
         }
@@ -18,25 +28,21 @@ namespace MassBussTesst
         public void WysłanyKomunikatDocieraDoCelu()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.Subscribe(subsciber);
+            szyna.Subscribe(subscriber);
             szyna.Initialize();
 
             // act
             szyna.Publish(new Message());
 
             // assert
-            subsciber.WaitFor(1);
+            subscriber.WaitFor(1);
         }
 
         [Test]
         public void PozwalaWysyłaćSekwencyjnie()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.SubscribeOrdered(subsciber);
+            szyna.SubscribeOrdered(subscriber);
             szyna.Initialize();
 
             // act
@@ -47,16 +53,14 @@ namespace MassBussTesst
             // assert
             CollectionAssert.AreEqual(
                 new[] { "A", "B", "C" },
-                subsciber.WaitFor(3).Select(o => o.Id).ToArray());
+                subscriber.WaitFor(3).Select(o => o.Id).ToArray());
         }
 
         [Test]
         public void WysyłanieJestTransakcyjne_PoRollbackuKomunikatNieDociera()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.Subscribe(subsciber);
+            szyna.Subscribe(subscriber);
             szyna.Initialize();
 
             // act
@@ -67,35 +71,31 @@ namespace MassBussTesst
             }
 
             // assert
-            Assert.Throws<Exception>(() => subsciber.WaitFor(1));
+            Assert.Throws<Exception>(() => subscriber.WaitFor(1));
         }
 
         [Test]
         public void WPrzypadkuBłęduPrzyOdbieraniuKomunikatWracaIJestPonawiany()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.Subscribe(subsciber);
+            szyna.Subscribe(subscriber);
             szyna.Initialize();
-            subsciber.ThrowExceptionOnce = true;
+            subscriber.ThrowExceptionOnce = true;
 
             // act
             szyna.Publish(new Message());
 
             // assert
-            subsciber.WaitFor(1);
+            subscriber.WaitFor(1);
         }
 
         [Test]
         public void WPrzypadkuPonawianiaKolejnośćKomunikatówNieJestZachowana()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.Subscribe(subsciber);
+            szyna.Subscribe(subscriber);
             szyna.Initialize();
-            subsciber.ThrowExceptionOnce = true;
+            subscriber.ThrowExceptionOnce = true;
 
             // act
             szyna.Publish(new Message { Id = "A" });
@@ -104,18 +104,16 @@ namespace MassBussTesst
             // assert
             CollectionAssert.AreEqual(
                 new[] { "B", "A" },
-                subsciber.WaitFor(2).Select(o => o.Id).ToArray());
+                subscriber.WaitFor(2).Select(o => o.Id).ToArray());
         }
 
         [Test]
         public void MożnaWymusićSekwencyjnośćNawetWPrzypadkuPonawiania()
         {
             // arrange
-            var szyna = new Szyna();
-            var subsciber = new TestingSubscriber();
-            szyna.SubscribeOrdered(subsciber);
+            szyna.SubscribeOrdered(subscriber);
             szyna.Initialize();
-            subsciber.ThrowExceptionOnce = true;
+            subscriber.ThrowExceptionOnce = true;
 
             // act
             szyna.PublishOrdered(new Message { Id = "A" });
@@ -124,7 +122,7 @@ namespace MassBussTesst
             // assert
             CollectionAssert.AreEqual(
                 new[] { "A", "B" },
-                subsciber.WaitFor(2).Select(o => o.Id).ToArray());
+                subscriber.WaitFor(2).Select(o => o.Id).ToArray());
         }
     }
 }
