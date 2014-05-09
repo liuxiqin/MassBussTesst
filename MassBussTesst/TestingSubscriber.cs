@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -8,14 +9,13 @@ namespace MassBussTesst
     {
         private const int DefaultTimeout = 5000;
 
-        public readonly List<Message> ReceivedMessages = new List<Message>();
-        private readonly AutoResetEvent waitHandle = new AutoResetEvent(false);
-        private readonly int expectedNoEvents;
+        private readonly BlockingCollection<Message> receivedMessages
+            = new BlockingCollection<Message>();
+
         private bool firstTimeException;
 
-        public TestingSubscriber(int expectedNoEvents = 1, bool firstTimeException = false)
+        public TestingSubscriber(bool firstTimeException = false)
         {
-            this.expectedNoEvents = expectedNoEvents;
             this.firstTimeException = firstTimeException;
         }
 
@@ -23,7 +23,7 @@ namespace MassBussTesst
         {
             System.Diagnostics.Debug.WriteLine("Handle: " + message);
 
-            lock (ReceivedMessages)
+            lock(receivedMessages)
             {
                 if (firstTimeException)
                 {
@@ -32,16 +32,24 @@ namespace MassBussTesst
                     throw new Exception();
                 }
 
-                ReceivedMessages.Add(message);
-                if (ReceivedMessages.Count == expectedNoEvents)
-                    waitHandle.Set();
+                receivedMessages.Add(message);
             }
         }
 
-        public void Wait()
+        public List<Message> WaitFor(int numberOfMessages)
         {
-            if (!waitHandle.WaitOne(DefaultTimeout))
-                throw new Exception("Brak wiadomoœci!");
+            var messages = new List<Message>();
+
+            while (numberOfMessages-- > 0)
+            {
+                Message msg;
+                if (!receivedMessages.TryTake(out msg, DefaultTimeout))
+                    throw new Exception("Brak wiadomoœci!");
+
+                messages.Add(msg);
+            }
+
+            return messages;
         }
     }
 }

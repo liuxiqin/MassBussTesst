@@ -22,13 +22,12 @@ namespace MassBussTesst
             var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize();
-            var message = Message.Create();
 
             // act
-            szyna.Publish(message);
+            szyna.Publish(Message.Create());
 
             // assert
-            subsciber.Wait();
+            subsciber.WaitFor(1);
         }
 
         [Test]
@@ -36,7 +35,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(expectedNoEvents: 3);
+            var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize(concurrent: false);
             var message1 = Message.Create();
@@ -49,10 +48,9 @@ namespace MassBussTesst
             szyna.Publish(message3);
 
             // assert
-            subsciber.Wait();
             CollectionAssert.AreEqual(
                 new[] { message1.Id, message2.Id, message3.Id },
-                subsciber.ReceivedMessages.Select(o => o.Id));
+                subsciber.WaitFor(3).Select(o => o.Id));
         }
 
         [Test]
@@ -73,7 +71,7 @@ namespace MassBussTesst
             }
 
             // assert
-            Assert.Throws<Exception>(subsciber.Wait);
+            Assert.Throws<Exception>(() => subsciber.WaitFor(1));
         }
 
         [Test]
@@ -81,7 +79,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(expectedNoEvents: 1, firstTimeException: true);
+            var subsciber = new TestingSubscriber(firstTimeException: true);
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             var message = Message.Create();
@@ -95,7 +93,7 @@ namespace MassBussTesst
 
             // assert
             // może niezbyt jasno widać, ale komunikat doszedł za drugim razem...
-            subsciber.Wait();
+            subsciber.WaitFor(1);
         }
 
         [Test]
@@ -103,7 +101,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(expectedNoEvents: 2, firstTimeException: true);
+            var subsciber = new TestingSubscriber(firstTimeException: true);
             szyna.Subscribe(subsciber);
             szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
@@ -114,10 +112,9 @@ namespace MassBussTesst
             szyna.Publish(message2);
 
             // assert
-            subsciber.Wait();
             CollectionAssert.AreEqual(
                 new[] { message2.Id, message1.Id },
-                subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
+                subsciber.WaitFor(2).Select(o => o.Id).ToArray());
         }
 
         [Test]
@@ -125,7 +122,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(expectedNoEvents: 2, firstTimeException: true);
+            var subsciber = new TestingSubscriber(firstTimeException: true);
             szyna.SubscribeOrdered(subsciber);
             szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
@@ -136,10 +133,9 @@ namespace MassBussTesst
             szyna.PublishOrdered(message2);
 
             // assert
-            subsciber.Wait();
             CollectionAssert.AreEqual(
                 new[] { message1.Id, message2.Id },
-                subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
+                subsciber.WaitFor(2).Select(o => o.Id).ToArray());
         }
     }
 }
