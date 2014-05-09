@@ -79,9 +79,10 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(firstTimeException: true);
+            var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize();
+            subsciber.ThrowExceptionOnce = true;
             var message = Message.Create();
 
             // act
@@ -101,9 +102,10 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(firstTimeException: true);
+            var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize(concurrent: true);
+            subsciber.ThrowExceptionOnce = true;
             var message1 = Message.Create();
             var message2 = Message.Create();
 
@@ -122,9 +124,10 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new TestingSubscriber(firstTimeException: true);
+            var subsciber = new TestingSubscriber();
             szyna.SubscribeOrdered(subsciber);
             szyna.Initialize(concurrent: true);
+            subsciber.ThrowExceptionOnce = true;
             var message1 = Message.Create();
             var message2 = Message.Create();
 

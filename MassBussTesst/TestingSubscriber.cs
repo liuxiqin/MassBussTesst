@@ -12,12 +12,7 @@ namespace MassBussTesst
         private readonly BlockingCollection<Message> receivedMessages
             = new BlockingCollection<Message>();
 
-        private bool firstTimeException;
-
-        public TestingSubscriber(bool firstTimeException = false)
-        {
-            this.firstTimeException = firstTimeException;
-        }
+        public bool ThrowExceptionOnce { private get; set; }
 
         void IMessageSubscriber<Message>.Handle(Message message)
         {
@@ -25,9 +20,9 @@ namespace MassBussTesst
 
             lock(receivedMessages)
             {
-                if (firstTimeException)
+                if (ThrowExceptionOnce)
                 {
-                    firstTimeException = false;
+                    ThrowExceptionOnce = false;
                     Thread.Sleep(50);
                     throw new Exception();
                 }
