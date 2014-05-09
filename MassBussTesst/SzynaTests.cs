@@ -31,21 +31,21 @@ namespace MassBussTesst
         }
 
         [Test]
-        public void WysłaneKomunikatyDocierająDoCeluWKolejnościWysyłaniaGdyUżytyJest1Wątek()
+        public void PozwalaWysyłaćSekwencyjnie()
         {
             // arrange
             var szyna = new Szyna();
             var subsciber = new TestingSubscriber();
-            szyna.Subscribe(subsciber);
-            szyna.Initialize(concurrent: false);
+            szyna.SubscribeOrdered(subsciber);
+            szyna.Initialize();
             var message1 = Message.Create();
             var message2 = Message.Create();
             var message3 = Message.Create();
 
             // act
-            szyna.Publish(message1);
-            szyna.Publish(message2);
-            szyna.Publish(message3);
+            szyna.PublishOrdered(message1);
+            szyna.PublishOrdered(message2);
+            szyna.PublishOrdered(message3);
 
             // assert
             CollectionAssert.AreEqual(
@@ -104,7 +104,7 @@ namespace MassBussTesst
             var szyna = new Szyna();
             var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
-            szyna.Initialize(concurrent: true);
+            szyna.Initialize();
             subsciber.ThrowExceptionOnce = true;
             var message1 = Message.Create();
             var message2 = Message.Create();
@@ -126,7 +126,7 @@ namespace MassBussTesst
             var szyna = new Szyna();
             var subsciber = new TestingSubscriber();
             szyna.SubscribeOrdered(subsciber);
-            szyna.Initialize(concurrent: true);
+            szyna.Initialize();
             subsciber.ThrowExceptionOnce = true;
             var message1 = Message.Create();
             var message2 = Message.Create();

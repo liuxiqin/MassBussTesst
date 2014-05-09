@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Messaging;
 using MassTransit;
-using MassTransit.Advanced;
 using MassTransit.SubscriptionConfigurators;
 
 namespace MassBussTesst
@@ -66,7 +65,7 @@ namespace MassBussTesst
             }
         }
 
-        public void Initialize(bool concurrent = true)
+        public void Initialize()
         {
             var address = new Uri("msmq://localhost/created_transactional");
             const string localName = @".\private$\created_transactional";
@@ -78,8 +77,6 @@ namespace MassBussTesst
                 sbc =>
                 {
                     sbc.UseMsmq(o => o.UseMulticastSubscriptionClient());
-                    if (!concurrent)
-                        sbc.SetConcurrentReceiverLimit(1);
                     sbc.ReceiveFrom(address);
                     sbc.SetCreateMissingQueues(true);
                     sbc.SetCreateTransactionalQueues(true);
