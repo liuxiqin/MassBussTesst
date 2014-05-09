@@ -29,6 +29,7 @@ namespace MassBussTesst
 
         public void SubscribeOrdered<T>(IMessageSubscriber<T> subscriber) where T : class
         {
+            // TODO: działa także dlatego, że jest tylko 1 subskrybent per komunikat
             Subscribe<OrderedMessage<T>>(
                 message =>
                 {
