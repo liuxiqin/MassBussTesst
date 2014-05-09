@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Transactions;
 using NUnit.Framework;
 
@@ -21,7 +19,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber();
+            var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             var message = Message.Create();
@@ -38,7 +36,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 3);
+            var subsciber = new TestingSubscriber(expectedNoEvents: 3);
             szyna.Subscribe(subsciber);
             szyna.Initialize(concurrent: false);
             var message1 = Message.Create();
@@ -62,7 +60,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber();
+            var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             var message = Message.Create();
@@ -83,7 +81,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 1, firstTimeException: true);
+            var subsciber = new TestingSubscriber(expectedNoEvents: 1, firstTimeException: true);
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             var message = Message.Create();
@@ -105,7 +103,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
+            var subsciber = new TestingSubscriber(expectedNoEvents: 2, firstTimeException: true);
             szyna.Subscribe(subsciber);
             szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
@@ -127,7 +125,7 @@ namespace MassBussTesst
         {
             // arrange
             var szyna = new Szyna();
-            var subsciber = new Subscriber(expectedNoEvents: 2, firstTimeException: true);
+            var subsciber = new TestingSubscriber(expectedNoEvents: 2, firstTimeException: true);
             szyna.SubscribeOrdered(subsciber);
             szyna.Initialize(concurrent: true);
             var message1 = Message.Create();
@@ -142,63 +140,6 @@ namespace MassBussTesst
             CollectionAssert.AreEqual(
                 new[] { message1.Id, message2.Id },
                 subsciber.ReceivedMessages.Select(o => o.Id).ToArray());
-        }
-
-        private class Subscriber : IMessageSubscriber<Message>
-        {
-            private const int DefaultTimeout = 5000;
-
-            public readonly List<Message> ReceivedMessages = new List<Message>();
-            private readonly AutoResetEvent waitHandle = new AutoResetEvent(false);
-            private readonly int expectedNoEvents;
-            private bool firstTimeException;
-
-            public Subscriber(int expectedNoEvents = 1, bool firstTimeException = false)
-            {
-                this.expectedNoEvents = expectedNoEvents;
-                this.firstTimeException = firstTimeException;
-            }
-
-            void IMessageSubscriber<Message>.Handle(Message message)
-            {
-                System.Diagnostics.Debug.WriteLine("Handle: " + message);
-
-                lock (ReceivedMessages)
-                {
-                    if (firstTimeException)
-                    {
-                        firstTimeException = false;
-                        throw new Exception();
-                    }
-
-                    Thread.Sleep(50);
-
-                    ReceivedMessages.Add(message);
-                    if (ReceivedMessages.Count == expectedNoEvents)
-                        waitHandle.Set();
-                }
-            }
-
-            public void Wait()
-            {
-                if (!waitHandle.WaitOne(DefaultTimeout))
-                    throw new Exception("Brak wiadomości!");
-            }
-        }
-
-        private class Message
-        {
-            public string Id { get; set; }
-
-            public static Message Create()
-            {
-                return new Message { Id = Guid.NewGuid().ToString() };
-            }
-
-            public override string ToString()
-            {
-                return Id;
-            }
         }
     }
 }
