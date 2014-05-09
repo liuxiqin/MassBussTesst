@@ -23,7 +23,7 @@ namespace MassBussTesst
                 if (ThrowExceptionOnce)
                 {
                     ThrowExceptionOnce = false;
-                    Thread.Sleep(50);
+                    Thread.Sleep(500);
                     throw new Exception();
                 }
 
