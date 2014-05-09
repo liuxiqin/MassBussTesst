@@ -6,9 +6,9 @@ namespace MassBussTesst
     {
         public string Id { get; set; }
 
-        public static Message Create()
+        public Message()
         {
-            return new Message { Id = Guid.NewGuid().ToString() };
+            Id = Guid.NewGuid().ToString();
         }
 
         public override string ToString()

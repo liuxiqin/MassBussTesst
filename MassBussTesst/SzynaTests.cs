@@ -24,7 +24,7 @@ namespace MassBussTesst
             szyna.Initialize();
 
             // act
-            szyna.Publish(Message.Create());
+            szyna.Publish(new Message());
 
             // assert
             subsciber.WaitFor(1);
@@ -38,19 +38,16 @@ namespace MassBussTesst
             var subsciber = new TestingSubscriber();
             szyna.SubscribeOrdered(subsciber);
             szyna.Initialize();
-            var message1 = Message.Create();
-            var message2 = Message.Create();
-            var message3 = Message.Create();
 
             // act
-            szyna.PublishOrdered(message1);
-            szyna.PublishOrdered(message2);
-            szyna.PublishOrdered(message3);
+            szyna.PublishOrdered(new Message { Id = "A" });
+            szyna.PublishOrdered(new Message { Id = "B" });
+            szyna.PublishOrdered(new Message { Id = "C" });
 
             // assert
             CollectionAssert.AreEqual(
-                new[] { message1.Id, message2.Id, message3.Id },
-                subsciber.WaitFor(3).Select(o => o.Id));
+                new[] { "A", "B", "C" },
+                subsciber.WaitFor(3).Select(o => o.Id).ToArray());
         }
 
         [Test]
@@ -65,7 +62,7 @@ namespace MassBussTesst
             // act
             using (new TransactionScope())
             {
-                szyna.Publish(Message.Create());
+                szyna.Publish(new Message());
                 // no commit!
             }
 
@@ -84,7 +81,7 @@ namespace MassBussTesst
             subsciber.ThrowExceptionOnce = true;
 
             // act
-            szyna.Publish(Message.Create());
+            szyna.Publish(new Message());
 
             // assert
             subsciber.WaitFor(1);
@@ -99,21 +96,19 @@ namespace MassBussTesst
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             subsciber.ThrowExceptionOnce = true;
-            var message1 = Message.Create();
-            var message2 = Message.Create();
 
             // act
-            szyna.Publish(message1);
-            szyna.Publish(message2);
+            szyna.Publish(new Message { Id = "A" });
+            szyna.Publish(new Message { Id = "B" });
 
             // assert
             CollectionAssert.AreEqual(
-                new[] { message2.Id, message1.Id },
+                new[] { "B", "A" },
                 subsciber.WaitFor(2).Select(o => o.Id).ToArray());
         }
 
         [Test]
-        public void Ordered_WPrzypadkuPonawianiaKolejnośćKomunikatówJestZachowana()
+        public void MożnaWymusićSekwencyjnośćNawetWPrzypadkuPonawiania()
         {
             // arrange
             var szyna = new Szyna();
@@ -121,16 +116,14 @@ namespace MassBussTesst
             szyna.SubscribeOrdered(subsciber);
             szyna.Initialize();
             subsciber.ThrowExceptionOnce = true;
-            var message1 = Message.Create();
-            var message2 = Message.Create();
 
             // act
-            szyna.PublishOrdered(message1);
-            szyna.PublishOrdered(message2);
+            szyna.PublishOrdered(new Message { Id = "A" });
+            szyna.PublishOrdered(new Message { Id = "B" });
 
             // assert
             CollectionAssert.AreEqual(
-                new[] { message1.Id, message2.Id },
+                new[] { "A", "B" },
                 subsciber.WaitFor(2).Select(o => o.Id).ToArray());
         }
     }
