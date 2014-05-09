@@ -61,12 +61,11 @@ namespace MassBussTesst
             var subsciber = new TestingSubscriber();
             szyna.Subscribe(subsciber);
             szyna.Initialize();
-            var message = Message.Create();
 
             // act
             using (new TransactionScope())
             {
-                szyna.Publish(message);
+                szyna.Publish(Message.Create());
                 // no commit!
             }
 
@@ -75,7 +74,7 @@ namespace MassBussTesst
         }
 
         [Test]
-        public void OdbieranieJestTransakcyjne()
+        public void WPrzypadkuBłęduPrzyOdbieraniuKomunikatWracaIJestPonawiany()
         {
             // arrange
             var szyna = new Szyna();
@@ -83,17 +82,11 @@ namespace MassBussTesst
             szyna.Subscribe(subsciber);
             szyna.Initialize();
             subsciber.ThrowExceptionOnce = true;
-            var message = Message.Create();
 
             // act
-            using (var ts = new TransactionScope())
-            {
-                szyna.Publish(message);
-                ts.Complete();
-            }
+            szyna.Publish(Message.Create());
 
             // assert
-            // może niezbyt jasno widać, ale komunikat doszedł za drugim razem...
             subsciber.WaitFor(1);
         }
 
