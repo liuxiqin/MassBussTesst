@@ -10,7 +10,7 @@ namespace MassBussTesst
         private const int DefaultTimeout = 5000;
 
         private readonly BlockingCollection<Message> receivedMessages
-            = new BlockingCollection<Message>();
+            = new BlockingCollection<Message>(new ConcurrentQueue<Message>());
 
         public bool ThrowExceptionOnce { private get; set; }
 
