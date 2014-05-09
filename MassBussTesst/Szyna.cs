@@ -78,6 +78,7 @@ namespace MassBussTesst
                 {
                     sbc.UseMsmq(o => o.UseMulticastSubscriptionClient());
                     sbc.ReceiveFrom(address);
+                    sbc.SetDefaultRetryLimit(10);
                     sbc.SetCreateMissingQueues(true);
                     sbc.SetCreateTransactionalQueues(true);
                     sbc.Subscribe(subs => subscribtions.ForEach(action => action(subs)));
