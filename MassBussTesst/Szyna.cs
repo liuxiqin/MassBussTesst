@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Messaging;
-using System.Threading;
 using MassTransit;
 using MassTransit.SubscriptionConfigurators;
 
@@ -12,18 +11,14 @@ namespace MassBussTesst
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
             = new List<Action<SubscriptionBusServiceConfigurator>>();
 
-        // TODO: powinien być 1 per strumień komunikatów
+        private static readonly object SyncObject = new Object();
         private int sequencer;
+        private int lastMessageNumber;
 
         public void PublishOrdered<T>(T message) where T : class
         {
-            // TODO: locking?
-            Publish(
-                new OrderedMessage<T>
-                {
-                    Number = Interlocked.Increment(ref sequencer),
-                    InnerMessage = message
-                });
+            lock(SyncObject)
+                Publish(new OrderedMessage<T> { Number = ++sequencer, InnerMessage = message });
         }
 
         public void Publish<T>(T message) where T : class
@@ -34,42 +29,33 @@ namespace MassBussTesst
 
         public void SubscribeOrdered<T>(IMessageSubscriber<T> subscriber) where T : class
         {
-            Subscribe(new OrderedSubsciber<T>(subscriber));
+            Subscribe<OrderedMessage<T>>(
+                message =>
+                {
+                    lock(SyncObject)
+                    {
+                        if (message.Number == lastMessageNumber + 1)
+                        {
+                            subscriber.Handle(message.InnerMessage);
+                            lastMessageNumber++;
+                        }
+                        else
+                        {
+                            // TODO: odpowiednik HandleCurrentMessageLater z NSeviceBus?
+                            throw new Exception("Out of order!");
+                        }
+                    }
+                });
         }
 
         public void Subscribe<T>(IMessageSubscriber<T> subscriber) where T : class
         {
-            subscribtions.Add(subs => subs.Handler<T>(subscriber.Handle).Permanent());
+            Subscribe<T>(subscriber.Handle);
         }
 
-        private class OrderedSubsciber<T> : IMessageSubscriber<OrderedMessage<T>>
-            where T : class
+        private void Subscribe<T>(Action<T> handler) where T : class
         {
-            private static readonly object SyncObject = new Object();
-            private int lastMessageNumber;
-            private readonly IMessageSubscriber<T> subscriber;
-
-            public OrderedSubsciber(IMessageSubscriber<T> subscriber)
-            {
-                this.subscriber = subscriber;
-            }
-
-            public void Handle(OrderedMessage<T> message)
-            {
-                lock(SyncObject)
-                {
-                    if (message.Number == lastMessageNumber + 1)
-                    {
-                        subscriber.Handle(message.InnerMessage);
-                        lastMessageNumber++;
-                    }
-                    else
-                    {
-                        // TODO: odpowiednik HandleCurrentMessageLater z NSeviceBus?
-                        throw new Exception("Out of order!");
-                    }
-                }
-            }
+            subscribtions.Add(subs => subs.Handler(handler).Permanent());
         }
 
         public void Initialize()
