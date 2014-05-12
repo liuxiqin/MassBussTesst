@@ -91,7 +91,7 @@ namespace MassBussTesst
             subscriber.WaitFor(1);
         }
 
-        [Test]
+        [Test, Ignore]
         public void WPrzypadkuPonawianiaKolejnośćKomunikatówNieJestZachowana()
         {
             // arrange
