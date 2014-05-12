@@ -21,7 +21,7 @@ namespace MassBussTesst
         [TearDown]
         public void TearDownEachTest()
         {
-            Szyna.Shutdown();
+            szyna.Dispose();
         }
 
         [Test]

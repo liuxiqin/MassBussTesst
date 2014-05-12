@@ -6,8 +6,10 @@ using MassTransit.SubscriptionConfigurators;
 
 namespace MassBussTesst
 {
-    class Szyna
+    class Szyna : IDisposable
     {
+        private IServiceBus bus;
+
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
             = new List<Action<SubscriptionBusServiceConfigurator>>();
 
@@ -24,7 +26,7 @@ namespace MassBussTesst
         public void Publish<T>(T message) where T : class
         {
             System.Diagnostics.Debug.WriteLine("Publish: " + message);
-            Bus.Instance.Publish(message);
+            bus.Publish(message);
         }
 
         public void SubscribeOrdered<T>(IMessageSubscriber<T> subscriber) where T : class
@@ -67,7 +69,7 @@ namespace MassBussTesst
             if (MessageQueue.Exists(localName))
                 MessageQueue.Delete(localName);
 
-            Bus.Initialize(
+            bus = ServiceBusFactory.New(
                 sbc =>
                 {
                     sbc.UseMsmq(o => o.UseMulticastSubscriptionClient());
@@ -79,9 +81,13 @@ namespace MassBussTesst
                 });
         }
 
-        public static void Shutdown()
+        public void Dispose()
         {
-            Bus.Shutdown();
+            if (bus != null)
+            {
+                bus.Dispose();
+                bus = null;
+            }
         }
     }
 }
