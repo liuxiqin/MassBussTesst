@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Messaging;
 using MassTransit;
 using MassTransit.SubscriptionConfigurators;
 
@@ -8,6 +7,8 @@ namespace MassBussTesst
 {
     class Szyna : IDisposable
     {
+        public const string QueueName = "created_transactional";
+
         private IServiceBus bus;
 
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
@@ -63,11 +64,7 @@ namespace MassBussTesst
 
         public void Initialize()
         {
-            var address = new Uri("msmq://localhost/created_transactional");
-            const string localName = @".\private$\created_transactional";
-
-            if (MessageQueue.Exists(localName))
-                MessageQueue.Delete(localName);
+            var address = new Uri("msmq://localhost/" + QueueName);
 
             bus = ServiceBusFactory.New(
                 sbc =>

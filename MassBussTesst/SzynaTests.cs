@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Messaging;
 using System.Transactions;
 using NUnit.Framework;
 
@@ -22,6 +23,9 @@ namespace MassBussTesst
         public void TearDownEachTest()
         {
             szyna.Dispose();
+
+            if (MessageQueue.Exists(@".\private$\" + Szyna.QueueName))
+                MessageQueue.Delete(@".\private$\" + Szyna.QueueName);
         }
 
         [Test]
