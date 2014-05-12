@@ -9,19 +9,25 @@ namespace MassBussTesst
     {
         public const string QueueName = "created_transactional";
 
+        private readonly ISekwencjeService sekwencjeService;
         private IServiceBus bus;
 
         private readonly List<Action<SubscriptionBusServiceConfigurator>> subscribtions
             = new List<Action<SubscriptionBusServiceConfigurator>>();
 
-        private static readonly object SyncObject = new Object();
-        private int sequencer;
-        private int lastMessageNumber;
+        public Szyna(ISekwencjeService sekwencjeService)
+        {
+            this.sekwencjeService = sekwencjeService;
+        }
 
         public void PublishOrdered<T>(T message) where T : class
         {
-            lock(SyncObject)
-                Publish(new OrderedMessage<T> { Number = ++sequencer, InnerMessage = message });
+            Publish(
+                new OrderedMessage<T>
+                {
+                    Number = sekwencjeService.NastepnaWartosc("publisher"),
+                    InnerMessage = message
+                });
         }
 
         public void Publish<T>(T message) where T : class
@@ -36,19 +42,11 @@ namespace MassBussTesst
             Subscribe<OrderedMessage<T>>(
                 message =>
                 {
-                    lock(SyncObject)
-                    {
-                        if (message.Number == lastMessageNumber + 1)
-                        {
-                            subscriber.Handle(message.InnerMessage);
-                            lastMessageNumber++;
-                        }
-                        else
-                        {
-                            // TODO: odpowiednik HandleCurrentMessageLater z NSeviceBus?
-                            throw new Exception("Out of order!");
-                        }
-                    }
+                    // TODO: odpowiednik HandleCurrentMessageLater z NSeviceBus?
+                    if (message.Number != sekwencjeService.NastepnaWartosc("subscriber"))
+                        throw new Exception("Out of order!");
+
+                    subscriber.Handle(message.InnerMessage);
                 });
         }
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Messaging;
 using System.Transactions;
 using NUnit.Framework;
 
@@ -15,7 +14,8 @@ namespace MassBussTesst
         [SetUp]
         public void SetUpEachTest()
         {
-            szyna = new Szyna();
+            TestHelper.InitializeDatabase();
+            szyna = new Szyna(new SekwencjeService());
             subscriber = new TestingSubscriber();
         }
 
@@ -23,9 +23,7 @@ namespace MassBussTesst
         public void TearDownEachTest()
         {
             szyna.Dispose();
-
-            if (MessageQueue.Exists(@".\private$\" + Szyna.QueueName))
-                MessageQueue.Delete(@".\private$\" + Szyna.QueueName);
+            TestHelper.DeleteQueues();
         }
 
         [Test]

@@ -1,5 +1,4 @@
-﻿using System.Data.Entity;
-using System.Transactions;
+﻿using System.Transactions;
 using NUnit.Framework;
 
 namespace MassBussTesst
@@ -10,12 +9,7 @@ namespace MassBussTesst
         [SetUp]
         public void SetUpEachTest()
         {
-            using (var db = new SzynaContext())
-            {
-                new DropCreateDatabaseIfModelChanges<SzynaContext>().InitializeDatabase(db);
-                db.Sekwencje.RemoveRange(db.Sekwencje);
-                db.SaveChanges();
-            }
+            TestHelper.InitializeDatabase();
         }
 
         [Test]
