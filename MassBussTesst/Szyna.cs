@@ -57,7 +57,7 @@ namespace MassBussTesst
 
         private void Subscribe<T>(Action<T> handler) where T : class
         {
-            subscribtions.Add(subs => subs.Handler(handler).Permanent());
+            subscribtions.Add(subs => subs.Handler(handler));
         }
 
         public void Initialize()
