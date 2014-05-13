@@ -48,9 +48,13 @@ namespace MassBussTesst
             szyna.Initialize();
 
             // act
-            szyna.PublishOrdered(new Message { Id = "A" });
-            szyna.PublishOrdered(new Message { Id = "B" });
-            szyna.PublishOrdered(new Message { Id = "C" });
+            using (var ts = new TransactionScope())
+            {
+                szyna.PublishOrdered(new Message { Id = "A" });
+                szyna.PublishOrdered(new Message { Id = "B" });
+                szyna.PublishOrdered(new Message { Id = "C" });
+                ts.Complete();
+            }
 
             // assert
             CollectionAssert.AreEqual(
@@ -85,7 +89,11 @@ namespace MassBussTesst
             subscriber.ThrowExceptionOnce = true;
 
             // act
-            szyna.Publish(new Message());
+            using (var ts = new TransactionScope())
+            {
+                szyna.Publish(new Message());
+                ts.Complete();
+            }
 
             // assert
             subscriber.WaitFor(1);
@@ -118,8 +126,12 @@ namespace MassBussTesst
             subscriber.ThrowExceptionOnce = true;
 
             // act
-            szyna.PublishOrdered(new Message { Id = "A" });
-            szyna.PublishOrdered(new Message { Id = "B" });
+            using (var ts = new TransactionScope())
+            {
+                szyna.PublishOrdered(new Message { Id = "A" });
+                szyna.PublishOrdered(new Message { Id = "B" });
+                ts.Complete();
+            }
 
             // assert
             CollectionAssert.AreEqual(
